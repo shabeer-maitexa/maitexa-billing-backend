@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 10mm; /* Reduce the margin */
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 12px; /* Smaller font size */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px; /* Adjust width to fit content */
+            margin: 0 auto;
+            padding: 10px; /* Reduced padding */
+            box-sizing: border-box;
+        }
+
+        .invoice-content {
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 10px; /* Reduced padding */
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .invoice-header,
+        .billing-info,
+        .table-section,
+        .important-notes {
+            margin-bottom: 10px; /* Reduced space between sections */
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .invoice-header .company-info {
+            width: 35%;
+            font-size: 10px; /* Reduced font size */
+        }
+
+        .invoice-header .invoice-title {
+            text-align: left;
+            width: 37%;
+            font-size: 14px; /* Adjust font size */
+        }
+
+        .billing-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px; /* Smaller font size */
+        }
+
+        .billing-info .billing-details,
+        .billing-info .invoice-details {
+            width: 48%;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px; /* Reduced margin */
+            font-size: 10px; /* Smaller font size for table */
+        }
+
+        th, td {
+            padding: 5px; /* Reduced padding */
+            text-align: left;
+            border: 1px solid #343131;
+        }
+
+        th {
+            background-color: #f9f9f9;
+        }
+
+        .page-break {
+            page-break-before: always;
+            page-break-after: always;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 10px; /* Smaller footer text */
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="invoice-content">
+            <!-- Header Section -->
+            <div class="invoice-header">
+                <div class="company-info">
+                    <h5>Maitexa Info Solutions</h5>
+                    <p>First floor, PV Building, Annie Hall Road, Calicut-02 <br />
+                        Phone: 3424378923 | Mob: 479229934</p>
+                </div>
+                <div class="invoice-title">
+                    <h1>Invoice</h1>
+                </div>
+                <div>
+                    <img src="" alt="Company Logo" style="max-width: 80px;" />
+                    <p><strong>Company Name</strong></p>
+                </div>
+            </div>
+
+            <!-- Billing Information -->
+            <div class="billing-info">
+                <div class="billing-details">
+                    <h4>Bill To:</h4>
+                    <p><strong>Name: </strong>{{client.first_name|capfirst}}</p>
+                    <p>Email: {{client.email}}</p>
+                    <p>Ph: {{client.phone}}</p>
+                    <p>{{client.address_line1|capfirst}}</p>
+                    <p>{{client.city |capfirst}},{{client.state|capfirst}},{{client.zip_code|capfirst}}</p>
+                </div>
+                <div class="invoice-details" style="text-align: right;">
+                    <p><strong>Invoice No:</strong> {{invoice.id}}</p>
+                    <p><strong>Invoice Date:</strong> {{ invoice.invoice_date|date:"d/m/y" }}</p>
+                    <p><strong>Joining Date:</strong> {{ invoice.invoice_date|date:"d/m/y" }}</p>
+                    <p><strong>Payment Method:</strong> {{invoice.mode_of_payment |capfirst}}</p>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div class="table-section">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Course Name</th>
+                            <th>Duration</th>
+                            <th>Installment</th>
+                            <th>Total Fee</th>
+                            <th>Discount</th>
+                            <th>Paid Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{invoice.course.course.course_name |capfirst}}</td>
+                            <td>{{invoice.course.course.course_duration }} Months</td>
+                            <td><!-- Installment Count --></td>
+                            <td>₹ {{invoice.course.amount_with_gst}}</td>
+                            <td>₹ {{invoice.course.fee_discount}}</td>
+                            <td>₹ {{invoice.current_paid_amount_with_gst}}</td>
+                        </tr>
+                        <tr>
+                            <td>Total Amount In Words: -</td>
+                            <td colspan="4" style="text-align: right;">sixty thousand</td>
+                            <td>₹ {{invoice.current_paid_amount_with_gst}}</td>
+                        </tr>
+                        <tr style="background: #bce261;">
+                            <td colspan="5" style="text-align: right;">Balance</td>
+                            <td style="text-align: left;">₹ {{invoice.course.balance}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="important-notes">
+                <h5>Important Notes:</h5>
+                <ul>
+                    <li>This invoice is subject to mutually acceptable terms and conditions.</li>
+                    <li>The allocated time for daily classes is 1.5 hrs per day / 7-8 hrs a week.</li>
+                    <li>Course validity/due date: <!-- Course Validity Date --></li>
+                    <li>If you have any questions concerning this invoice, please contact us at: [email]</li>
+                </ul>
+            </div>
+
+            <!-- Regards -->
+            <div style="margin-top: 10px;">
+                <p>Regards <br /> Manager-Accounts</p>
+            </div>
+
+            <!-- Footer -->
+            <div class="footer">
+                Thank you for joining us !!! Start learning and get hired fast <br />
+                <i style="color: #777;">This is a computer-generated invoice, no signature required.</i>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
