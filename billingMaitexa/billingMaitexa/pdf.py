@@ -20,7 +20,7 @@ def generate_pdf(content,template,file_name,option):
     # Create a PDF file from the HTML using pdfkit
     if option==1:
         options = {
-        'page-size': 'A3',
+        'page-size': 'A4',
         'orientation':'Landscape',
         'margin-top': '0.2854in',
         'margin-right': '0.5in',

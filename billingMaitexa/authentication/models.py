@@ -46,3 +46,15 @@ class Profile(AbstractUser):
         verbose_name='Profile'
         verbose_name_plural='Profile'
 
+
+class ComapanyInfo(BaseClass):
+    name=models.CharField(max_length=255,null=True,blank=True)
+    description=models.TextField(null=True,blank=True)
+    address_line1=models.CharField(max_length=255,null=True,blank=True)
+    address_line2=models.CharField(max_length=255,null=True,blank=True)
+    phone=models.CharField(max_length=12,null=True,blank=True)
+    email=models.EmailField(null=True,blank=True)
+    licence_name=models.CharField(max_length=255,null=True,blank=True)
+
+    def __str__(self):
+        return 'company info'
