@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Template</title>
+</head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 20px;">
+    <div style="padding: 20px;">
+        <div style="border: 1px solid #ccc; padding: 20px; background-color: #fff; margin: 20px auto; width: 1240px;">
+            <!-- Header Section -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div style="max-width: 50%;">
+                    <h5>Maitexa info solutions</h5>
+                    <p style="margin: 0; padding: 0; font-size: smaller;">First floor, PV Building, Annie Hall Road, Calicut-02 <br />
+                    Phone: 3424378923 | Mob: 479229934</p>
+                </div>
+                <div style="text-align: center; max-width: 50%;">
+                    <h1>Invoice</h1>
+                </div>
+                <div style="margin-left: 60px;">
+                    <img src="" alt="Company Logo" style="max-width: 100px;" />
+                    <p><strong>Company Name</strong></p>
+                </div>
+            </div>
+
+            <!-- Billing Information -->
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+                <div style="max-width: 50%; border-top: 1px solid #ccc; padding-top: 10px;">
+                    <h4 style="margin: 0; padding: 0;">Bill To:</h4>
+                    <p style="margin: 0; padding: 0;"><strong>{{client.first_name|capfirst}}</strong></p>
+                    <p style="margin: 0; padding: 0;">Email: {{client.email}}</p>
+                    <p style="margin: 0; padding: 0;">Ph: {{client.phone}}</p>
+                    <p style="margin: 0; padding: 0;">{{client.address_line1|capfirst}}</p>
+                    <p style="margin: 0; padding: 0;">{{client.city|capfirst}}, {{client.state|capfirst}}, {{client.zip_code|capfirst}}</p>
+                </div>
+                <div style="text-align: right; max-width: 20%; padding-left: 50px;">
+                    <div style="display: flex; width: 400px;">
+                        <div>
+                            <p style="margin: 0; padding: 0;"><strong>Invoice No:</strong></p>
+                            <p style="margin: 0; padding: 0;"><strong>Invoice Date:</strong></p>
+                            <p style="margin: 0; padding: 0;"><strong>Joining Date:</strong></p>
+                            <p style="margin: 0; padding: 0;"><strong>Payment Method:</strong></p>
+                        </div>
+                        <div>
+                            <p style="margin: 0; padding: 0; text-align: left;"> {{invoice.id}}</p>
+                            <p style="margin: 0; padding: 0; text-align: left;"> {{ invoice.invoice_date|date:"d/m/y" }}</p>
+                            <p style="margin: 0; padding: 0; text-align: left;"> {{ invoice.invoice_date|date:"d/m/y" }}</p>
+                            <p style="margin: 0; padding: 0; text-align: left;"> {{invoice.mode_of_payment |capfirst}}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div style="margin-bottom: 20px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Course Name</th>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Duration</th>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Installment</th>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Total Fee</th>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Discount</th>
+                            <th style="border: 2px solid #343131; padding: 10px; background-color: #f9f9f9;">Paid Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 2px solid #343131; padding: 10px;">{{invoice.course.course.course_name |capfirst}}</td>
+                            <td style="border: 2px solid #343131; padding: 10px;">{{invoice.course.course.course_duration }} Months</td>
+                            <td style="border: 2px solid #343131; padding: 10px;"></td>
+                            <td style="border: 2px solid #343131; padding: 10px;">₹ {{invoice.course.amount_with_gst}}</td>
+                            <td style="border: 2px solid #343131; padding: 10px;">₹ {{invoice.course.fee_discount}}</td>
+                            <td style="border: 2px solid #343131; padding: 10px;">₹ {{invoice.current_paid_amount_with_gst}}</td>
+                        </tr>
+                        <tr>
+                            <td style="border: 2px solid #343131; padding: 10px;">Total Amount In Words: -</td>
+                            <td style="border: 2px solid #343131; text-align: right;" colspan="4">sixty thousand</td>
+                            <td style="border: 2px solid #343131; padding: 10px;">₹ {{invoice.current_paid_amount_with_gst}}</td>
+                        </tr>
+                        <tr style="border: 2px solid #343131;background: #bce261;">
+                            <td style="border: 2px solid #343131;text-align: right;" colspan="5">Balance</td>
+                            <td style="border: 2px solid #343131;text-align: left; padding: 10px;">₹ {{invoice.course.balance}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Important Notes -->
+            <div style="margin-bottom: 20px;">
+                <h5>Important Notes:</h5>
+                <ul style="margin-left: 20px;">
+                    <li>This invoice is subject to mutually acceptable terms and conditions.</li>
+                    <li>The allocated time for daily classes is 1.5 hrs per day / 7-8 hrs a week.</li>
+                    <li>Course validity/due date: {{invoice.course.due_date}}</li>
+                    <li>If you have any questions concerning this invoice, please contact us at: [email]</li>
+                </ul>
+            </div>
+
+            <!-- Regards -->
+            <div style="margin-top: 20px;">
+                <p>Regards <br /> Manager-Accounts</p>
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align: center; font-weight: bold; margin-top: 20px;">
+                Thank you for joining us !!! Start learning and get hired fast <br />
+                <i style="color: #777;">This is a computer-generated invoice, no signature required.</i>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

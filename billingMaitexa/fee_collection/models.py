@@ -49,9 +49,13 @@ class CourseFees(BaseClass):
 
 
     def calculate_balance(self):
-        return self.amount_with_discount - self.paid_amount
+        if self.paid_amount > self.amount_with_gst:
+            return 0
+        return self.amount_with_gst - self.paid_amount
     
     def payment_status_update(self):
+        if self.paid_amount > self.amount_with_gst:
+            return True
         return True if self.paid_amount - self.amount_with_gst  == 0 else False
 
     def save(self, *args, **kwargs):

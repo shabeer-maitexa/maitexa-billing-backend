@@ -56,7 +56,7 @@ class ListCourseFeesSerializer(serializers.ModelSerializer):
         depth=2
     
     def get_payement_status(self,obj):
-        if obj.amount_with_discount and obj.amount_with_discount-obj.paid_amount== 0:
+        if obj.amount_with_gst and obj.amount_with_gst-obj.paid_amount<= 0:
             return 'Paid'
         else:
             return 'Unpaid' 

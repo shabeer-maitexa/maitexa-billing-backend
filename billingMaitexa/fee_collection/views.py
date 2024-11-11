@@ -113,8 +113,9 @@ class PayInstallmentAPIView(APIView):
 
 
         domain_fee=request.data.get('total_fees',0)
-        total_amount_to_pay=round(float(domain_fee)+float(domain_fee)*0.18)
         fee_discount=request.data.get('fee_discount',0)
+        amount=float(domain_fee)-float(fee_discount)
+        total_amount_to_pay=round(float(amount)+float(amount)*0.18)
 
         invoice_data={
             'course':course_fees.id,
@@ -126,7 +127,7 @@ class PayInstallmentAPIView(APIView):
 
         serializer=InvoiceSerializer(data=invoice_data)
         if serializer.is_valid():
-            course_fees.paid_amount=course_fees.paid_amount+float(current_payment)
+            course_fees.paid_amount=course_fees.paid_amount+float(current_payment_with_gst)
             course_fees.domain_fee=domain_fee
             course_fees.fee_discount=fee_discount
             course_fees.amount_with_gst=float(total_amount_to_pay)
@@ -149,7 +150,7 @@ class PayInstallmentAPIView(APIView):
 
 ## List invoices
 class InvoiceListAPIView(ListAPIView):
-    serializer_class = InvoiceListSerializer
+    serializer_class = ViewInvoiceSerializer
     # permission_classes = []
     # pagination_class = CustomPagination  
 
@@ -218,7 +219,7 @@ class InvoiceDownloadAPIView(APIView):
       
         if invoice_data:
             content= {'invoice':invoice_data,'client':client}
-            template = './invoice.html'
+            template = './invoicepdf.html'
             filename = 'invoice-'+str(date.today())
             ### option set for portrait and landscape landscape-1,portrait-2
             option=1
@@ -308,7 +309,7 @@ class CoursesListAPIView(ListAPIView):
         queryset = Course.objects.filter(active_status=True)
         if course_type:
             queryset = queryset.filter(course_type=course_type)
-        return queryset
+        return queryset.order_by('-id')
 
 ## List coursefees
 class CoursesFeesListAPIView(ListAPIView):
