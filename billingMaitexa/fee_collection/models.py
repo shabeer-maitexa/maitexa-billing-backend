@@ -54,6 +54,8 @@ class CourseFees(BaseClass):
         return self.amount_with_gst - self.paid_amount
     
     def payment_status_update(self):
+        if self.paid_amount ==0 and self.amount_with_gst==0:
+            return False
         if self.paid_amount > self.amount_with_gst:
             return True
         return True if self.paid_amount - self.amount_with_gst  == 0 else False
