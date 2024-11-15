@@ -1,22 +1,35 @@
+
+## Restframe work imports
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView,CreateAPIView
 
+## Serilalizer imports
 from .serializers import InvoiceSerializer,CourseFeesSerializer,CoursesSerializer,ViewInvoiceSerializer,ListCourseFeesSerializer,InvoiceListSerializer
+from authentication.serializers import ProfileSerializer
+
+# Model imports
 from .models import Invoice , CourseFees,PaymentStatus,Course
-from authentication.models import Profile
+from authentication.models import Profile,RoleChoices
+
 
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from datetime import date
-from billingMaitexa.pdf import generate_pdf
 import threading
-
 from datetime import datetime
+
+
+## Utils imports
 from .utils import send_email
+from billingMaitexa.pdf import generate_pdf
 
 
+## Other 
+from authentication.permissisons import *
+
+## Payment status update
 def payment_status_update(obj):
     if obj.balance <= 0:
         return PaymentStatus.PAID
@@ -26,12 +39,14 @@ def payment_status_update(obj):
         return PaymentStatus.UNPAID
 
 
-## Genarate a bill for new admission
+## Register new admission
 class RegisterUserAPIView(APIView):
     permission_classes = []
+    serializer_class=ProfileSerializer
 
     def post(self, request):
-        data = request.data
+        data = request.data.copy()
+        data['role']=RoleChoices.STUDENT
         email = data.get('email')
         course_id = data.get('course')
 
@@ -41,33 +56,31 @@ class RegisterUserAPIView(APIView):
         if not course_id:
             return Response({'message': 'Course ID is required'}, status=status.HTTP_400_BAD_REQUEST)
 
+
         course_fee_serializer = CourseFeesSerializer(data=data)
         if not course_fee_serializer.is_valid():
             return Response(course_fee_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get or create the profile
-        profile, created = Profile.objects.get_or_create(
-            email=email,
-            defaults={
-                'first_name': data.get('first_name'),
-                'last_name': data.get('last_name'),
-                'phone': data.get('phone'),
-                'phone_b': data.get('phone_b',''),
-                'email':email,
-                'password': '',
-                'address_line1':data.get('address_line1',''),
-                'address_line2':data.get('address_line2',''),
-                'city':data.get('city',''),
-                'state':data.get('state',''),
-                'zip_code':data.get('zip_code',''),
-            }
-        )
+        profile=Profile.objects.filter(email=email)
+        if profile.exists():    
+            serializer=self.serializer_class(profile.first(),data=data,partial=True)
+            if serializer.is_valid():
+                profile=serializer.save()
+            else :
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            serializer=self.serializer_class(data=data)
+            if serializer.is_valid():
+                profile=serializer.save()
+            else :
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         if CourseFees.objects.filter(profile=profile, course__id=course_id).exists():
-            return Response({'message': 'User exists'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'course for this User exists'}, status=status.HTTP_400_BAD_REQUEST)
+        
         try:
-            course_fees = course_fee_serializer.save(profile=profile)
-            return Response({'message': 'Registration success'}, status=status.HTTP_201_CREATED)
+            course_obj=course_fee_serializer.save(profile=profile)
+            return Response({'message': 'Registration success','course_uuid':course_obj.uuid}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
             CourseFees.objects.filter(profile=profile).delete()
@@ -77,13 +90,13 @@ class RegisterUserAPIView(APIView):
 ## Pay installment
 class PayInstallmentAPIView(APIView):
     def post (self,request):
-        course_fees=get_object_or_404(CourseFees,uuid=request.data.get('uuid'))
+        course_fees=get_object_or_404(CourseFees,uuid=request.GET.get('uuid'))
         invoices=Invoice.objects.filter(course=course_fees).count()+1
         payment_mode=request.data.get('mode_of_payment')
         current_payment=request.data.get('current_payment',0)
         current_payment_with_gst=round(float(current_payment)+float(current_payment)*0.18)
 
-        if request.data.get('new_user') == False:
+        if request.GET.get('new_user') == 'false':
             invoice_data={
                 'course':course_fees.id,
                 'installment_number':invoices,
@@ -105,8 +118,7 @@ class PayInstallmentAPIView(APIView):
 
                 email_thread = threading.Thread(target=send_email, args=(template, subject, content, recipient), kwargs={'pdf_content': pdf_content})
                 email_thread.start()
-                # send_email(template, subject, content, recipient,pdf_content=pdf_content)
-
+                send_email(template, subject, content, recipient,pdf_content=pdf_content)
 
                 return Response({'message': 'Fee paid successfully', 'invoice_id': invoice_instance.uuid}, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -161,7 +173,8 @@ class InvoiceListAPIView(ListAPIView):
         uuid = self.request.query_params.get('course_uuid')
         print(uuid)
 
-        queryset = Invoice.objects.filter(course__uuid=uuid)
+        # queryset = Invoice.objects.filter(course__uuid=uuid)
+        queryset = Invoice.objects.all()
         if payment_status=='paid':
             queryset=queryset.filter(payment_status=PaymentStatus.PAID)
         elif payment_status=='partial':
@@ -180,7 +193,7 @@ class InvoiceListAPIView(ListAPIView):
                 queryset = queryset.filter(invoice_date__year=year)
             except ValueError:
                 queryset = queryset.none()
-        return queryset
+        return queryset.order_by('-id')
 
 
 ## update invoice
@@ -300,7 +313,7 @@ class UpdateCourseAPIView(APIView):
 ## List courses
 class CoursesListAPIView(ListAPIView):
     serializer_class = CoursesSerializer
-    # permission_classes = []
+    # permission_classes = [IsAdmin]
     # pagination_class = CustomPagination  
 
     def get_queryset(self):
@@ -318,23 +331,22 @@ class CoursesFeesListAPIView(ListAPIView):
     # pagination_class = CustomPagination  
 
     def get_queryset(self):
-        payment_completed = self.request.query_params.get('payment_completed')
-        course = self.request.query_params.get('course_uuid')
-        email = self.request.query_params.get('email')
-        is_new_user = self.request.query_params.get('is_new_user')
+        payment_completed = self.request.query_params.get('payment_completed',None)
+        course = self.request.query_params.get('course_uuid',None)
+        name = self.request.query_params.get('name',None)
+        is_new_user = self.request.query_params.get('is_new_user','true')
         
 
         queryset = CourseFees.objects.all()
 
-        print(is_new_user)
-        if is_new_user == 'true':
-            queryset = queryset.filter(
-            invoices__isnull=True 
-         ).distinct()
-        else:
-            queryset = queryset.filter(
-            invoices__isnull=False 
-         ).distinct()
+        # if is_new_user == 'true':
+        #     queryset = queryset.filter(
+        #     invoices__isnull=True 
+        #  ).distinct()
+        # else:
+        #     queryset = queryset.filter(
+        #     invoices__isnull=False 
+        #  ).distinct()
             
 
         if course:
@@ -345,9 +357,10 @@ class CoursesFeesListAPIView(ListAPIView):
         elif payment_completed=='false':
             queryset=queryset.filter(payment_completed=False)
  
-        if email:
-            queryset = queryset.filter(profile__email__contains=email)
-        return queryset
+        if name:
+            queryset = queryset.filter(profile__first_name__contains=name)
+        print(queryset)
+        return queryset.order_by('-id')
 
     
 
@@ -381,18 +394,18 @@ from django.db.models import Sum
 class GetGraphDataAPIView(APIView):
     def get(self,request):
         month_dict = {
-            1: 'January',
-            2: 'February',
-            3: 'March',
-            4: 'April',
+            1: 'Jan',
+            2: 'Feb',
+            3: 'Mar',
+            4: 'Apr',
             5: 'May',
             6: 'June',
             7: 'July',
-            8: 'August',
-            9: 'September',
-            10: 'October',
-            11: 'November',
-            12: 'December'
+            8: 'Aug',
+            9: 'Sep',
+            10: 'Oct',
+            11: 'Nov',
+            12: 'Dec'
         }
 
         start_date, end_date = get_financial_year()

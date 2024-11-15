@@ -15,6 +15,15 @@ class BaseClass(models.Model):
 
 class RoleChoices(models.TextChoices):
     ADMIN = 'Admin', 'Admin' 
+    USER = 'User', 'User' 
+    STUDENT = 'Student', 'Student' 
+
+
+GENDER_CHOICES = [
+    ('Male', 'Male'),
+    ('Female', 'Female'),
+    ('Other', 'Other'),
+]
 
 ## Profile model 
 class Profile(AbstractUser):
@@ -35,7 +44,13 @@ class Profile(AbstractUser):
     city=models.CharField(max_length=255,null=True,blank=True)
     state=models.CharField(max_length=30,null=True,blank=True)
     zip_code=models.CharField(max_length=8,null=True,blank=True)
-
+    college=models.CharField(max_length=255,null=True,blank=True)
+    university=models.CharField(max_length=255,null=True,blank=True)
+    academic_year=models.CharField(max_length=8,null=True,blank=True)
+    gender=models.CharField(max_length=8,choices=GENDER_CHOICES,null=True,blank=True)
+    studied_course=models.CharField(max_length=255,null=True,blank=True)
+    internship=models.CharField(max_length=255,null=True,blank=True)
+    project_title=models.CharField(max_length=255,null=True,blank=True)
 
 
     def __str__(self):
