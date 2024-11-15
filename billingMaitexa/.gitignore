@@ -34,7 +34,7 @@ ENV/
 env/
 .venv/
 env.bak/
-
+./venv
 # Django stuff:
 *.log
 *.pot
